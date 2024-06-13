@@ -41,12 +41,7 @@ tmp_<exename>.py
 *.sqlite-journal
 
 # Chrome profile
-chrome_profile
-downloaded_files
-runtime
 .env
-wallet
-test_.py
 
 *.yaml
 *.zip
@@ -56,13 +51,6 @@ tmp/
 cache/
 # grass.crx
 
-chromedriver
-accounts.db
-*.db
-grass-prod/runtime
-grass-prod/disk-cache
-grass-prod/user-data
-*.txt
 *.sh
 *.log
 .vercel
