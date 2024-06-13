@@ -65,3 +65,4 @@ grass-prod/user-data
 *.txt
 *.sh
 *.log
+.vercel
