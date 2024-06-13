@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="flex h-screen">
+    <div class="bg-gray-200 p-4 overflow-y-auto w-1/2">
+        <h2 class="text-2xl font-bold mb-4">Wallet Addresses</h2>
+        <ul>
+            {% for address in messages %}
+            <li class="bg-white p-2 mb-2 rounded shadow">{{ address }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="bg-gray-100 p-4 w-1/2">
+        <h2 class="text-2xl font-bold mb-4">Withdraw Funds</h2>
+        <div class="space-y-4">
+            <div>
+                <label for="api_key" class="block font-bold mb-2">API Key</label>
+                <input type="text" id="api_key" name="api_key" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+            </div>
+            <div>
+                <label for="api_secret" class="block font-bold mb-2">API Secret</label>
+                <input type="text" id="api_secret" name="api_secret" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+            </div>
+            <div>
+                <label for="coin" class="block font-bold mb-2">Coin</label>
+                <input type="text" id="coin" name="coin" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" value="BNB" required>
+            </div>
+            <div>
+                <label for="withdraw_interval" class="block font-bold mb-2">Withdraw Interval (seconds)</label>
+                <input type="number" id="withdraw_interval1" name="withdraw_interval" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" min="60" max="600" value="120" required>
+                <input type="number" id="withdraw_interval2" name="withdraw_interval" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" min="60" max="600" value="180" required>
+            </div>
+            <div>
+                <label for="withdraw_amount" class="block font-bold mb-2">Withdraw Amount</label>
+                <input type="number" id="withdraw_amount1" name="withdraw_amount" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" min="0.02" step="0.001" value="0.02" required>
+                <input type="number" id="withdraw_amount2" name="withdraw_amount" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" min="0.02" step="0.001" value="0.03" required>
+            </div>
+            <div>
+                <label for="withdraw_amount" class="block font-bold mb-2">数量精度</label>
+                <input type="number" id="num_decimals" name="num_decimals" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" min="0" step="1" value="3" required>
+            </div>
+            <input id="network" type="hidden" name="ntework" value="{{ network }}">
+            <input id="wallet_addresses" type="hidden" name="wallet_addresses" value="{{ ','.join(valid_addrs) }}">
+            <button id="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2">Withdraw</button>
+        </div>
+        <div id="withdraw-log" class="mt-4 p-4 bg-gray-200 rounded shadow overflow-auto"></div>
+    </div>
+</div>
+<style>
+    #withdraw-log {
+        max-height: 50vh; /* 设置最大高度为视口高度的50% */
+        overflow-y: auto; /* 添加垂直滚动条 */
+    }
+</style>
+<script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.js"></script>
+<script>
+    var socket = io();
+    document.getElementById('submit').addEventListener('click', function() {
+        console.log('click')
+            socket.emit('submit_form', {
+                api_key: document.getElementById('api_key').value,
+                api_secret: document.getElementById('api_secret').value,
+                coin: document.getElementById('coin').value,
+                network: document.getElementById('network').value,
+                withdraw_interval1: document.getElementById('withdraw_interval1').value,
+                withdraw_interval2: document.getElementById('withdraw_interval2').value,
+                withdraw_amount1: document.getElementById('withdraw_amount1').value,
+                withdraw_amount2: document.getElementById('withdraw_amount2').value,
+                wallet_addresses: document.getElementById('wallet_addresses').value,
+                num_decimals: document.getElementById('num_decimals').value
+            });
+        });
+    socket.on('withdraw_log', function(log) {
+        var logDiv = document.getElementById('withdraw-log');
+        logDiv.innerHTML += '<p>' + log + '</p>';
+    });
+</script>
+{% endblock %}
