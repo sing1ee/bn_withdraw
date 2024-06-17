@@ -8,13 +8,45 @@ import random
 import requests
 
 from binance.client import Client
+from okx import Funding
+
+ON_CHAIN = 4
+
+
+class Okx:
+    def __init__(self, api_key, api_secret, passphrase):
+        self.client = Funding.FundingAPI(
+            api_key, api_secret, passphrase, use_server_time=False, flag="0"
+        )
+
+    def withdraw(self, coin, amount, address, network):
+        fee = 0
+        for item in self.client.get_currencies(coin)["data"]:
+            if item["chain"] == network and item["ccy"] == coin:
+                fee = item["minFee"]
+        return self.client.withdrawal(
+            ccy=coin,
+            amt=amount,
+            dest=ON_CHAIN,
+            toAddr=address,
+            fee=fee,
+            chain=network,
+        )
+
+    def all_coins(self):
+        return list(set([item["ccy"] for item in self.client.get_currencies()["data"]]))
+
+    def networks_by_coin(self, coin):
+        return list(
+            set([item["chain"] for item in self.client.get_currencies(coin)["data"]])
+        )
 
 
 class Binance:
     def __init__(self, api_key, api_secret):
         self.client = Client(api_key, api_secret)
 
-    def withdraw(self, coin, address, amount, network):
+    def withdraw(self, coin, amount, address, network):
         return self.client.withdraw(
             coin=coin,
             address=address,
@@ -23,7 +55,13 @@ class Binance:
         )
 
     def all_coins(self):
-        return self.client.get_all_coins_info()
+        return list(set([item["coin"] for item in self.client.get_all_coins_info()]))
+
+    def networks_by_coin(self, coin):
+        for item in self.client.get_all_coins_info():
+            if item["coin"] == coin:
+                return [item["network"] for item in item["networkList"]]
+        return []
 
 
 def get_ip():
@@ -98,8 +136,10 @@ def index():
 
 @socketio.on("submit_form")
 def withdraw(form_data):
+    exchange = form_data["exchange"].strip().upper()
     api_key = form_data["api_key"].strip()
     api_secret = form_data["api_secret"].strip()
+    passphrase = form_data["passphrase"].strip()
     coin = form_data["coin"].strip().upper()
     network = form_data["network"].strip().upper()
     withdraw_interval1 = float(form_data["withdraw_interval1"].strip())
@@ -109,7 +149,24 @@ def withdraw(form_data):
     wallet_addresses = form_data["wallet_addresses"].strip().split(",")
     num_decimals = int(form_data["num_decimals"].strip())
     # print form_data
-    bn = Binance(api_key, api_secret)
+    cli = None
+    if exchange == "OKX":
+        cli = Okx(api_key, api_secret, passphrase=passphrase)
+    elif exchange == "BINANCE":
+        cli = Binance(api_key, api_secret)
+    else:
+        emit("withdraw_log", "Invalid exchange.")
+        return
+    # check coin and network is valid
+    if coin not in cli.all_coins():
+        emit("withdraw_log", "Invalid coin.")
+        return
+    if network not in cli.networks_by_coin(coin):
+        emit(
+            "withdraw_log",
+            "Invalid network. Must in : " + " ".join(cli.networks_by_coin(coin)),
+        )
+        return
     total = len(wallet_addresses)
     idx = 1
     for addr in wallet_addresses:
@@ -122,7 +179,7 @@ def withdraw(form_data):
         emit("withdraw_log", current_time())
         try:
             result = "mock"
-            result = bn.withdraw(coin, addr, withdraw_amount, network)
+            result = cli.withdraw(coin, addr, withdraw_amount, network)
             emit(
                 "withdraw_log",
                 json.dumps(result),
