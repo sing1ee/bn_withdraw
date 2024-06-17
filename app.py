@@ -190,7 +190,7 @@ def withdraw(form_data):
         emit("withdraw_log", current_time())
         try:
             result = "mock"
-            result = cli.withdraw(coin, addr, withdraw_amount, network)
+            result = cli.withdraw(coin, withdraw_amount, addr, network)
             emit(
                 "withdraw_log",
                 json.dumps(result),
