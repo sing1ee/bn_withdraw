@@ -74,6 +74,16 @@ def get_ip():
         return None
 
 
+def get_ip_v6():
+    try:
+        response = requests.get("https://v6.ipinfo.io", timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        return data["ip"]
+    except requests.exceptions.RequestException:
+        return ""
+
+
 def truncate(number, decimals=2):
     factor = 10.0**decimals
     return math.floor(number * factor) / factor
@@ -131,7 +141,8 @@ def index():
             network=network,
         )
     ip = get_ip()
-    return render_template("index.html", ip=ip)
+    ipv6 = get_ip_v6()
+    return render_template("index.html", ip=ip, ipv6=ipv6)
 
 
 @socketio.on("submit_form")
