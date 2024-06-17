@@ -34,9 +34,11 @@ class Okx:
         )
 
     def all_coins(self):
+        print(self.client.get_currencies())
         return list(set([item["ccy"] for item in self.client.get_currencies()["data"]]))
 
     def networks_by_coin(self, coin):
+        print(self.client.get_currencies(coin))
         return list(
             set([item["chain"] for item in self.client.get_currencies(coin)["data"]])
         )
