@@ -19,7 +19,7 @@ class Okx:
             api_key, api_secret, passphrase, use_server_time=False, flag="0"
         )
 
-    def withdraw(self, coin, amount, address, network):
+    def withdraw(self, coin, address, amount, network):
         fee = 0
         for item in self.client.get_currencies(coin)["data"]:
             if item["chain"] == network and item["ccy"] == coin:
@@ -46,7 +46,7 @@ class Binance:
     def __init__(self, api_key, api_secret):
         self.client = Client(api_key, api_secret)
 
-    def withdraw(self, coin, amount, address, network):
+    def withdraw(self, coin, address, amount, network):
         return self.client.withdraw(
             coin=coin,
             address=address,
@@ -190,7 +190,9 @@ def withdraw(form_data):
         emit("withdraw_log", current_time())
         try:
             result = "mock"
-            result = cli.withdraw(coin, withdraw_amount, addr, network)
+            result = cli.withdraw(
+                coin=coin, address=addr, amount=withdraw_amount, network=network
+            )
             emit(
                 "withdraw_log",
                 json.dumps(result),
